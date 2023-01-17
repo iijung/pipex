@@ -6,7 +6,7 @@
 /*   By: minjungk <minjungk@student.42seoul.kr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/01/16 10:17:59 by minjungk          #+#    #+#             */
-/*   Updated: 2023/01/16 17:26:57 by minjungk         ###   ########.fr       */
+/*   Updated: 2023/01/18 00:30:51 by minjungk         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,7 +47,7 @@ static void	setcmd(char *envp[], char **cmd)
 	while (path && path[++i])
 	{
 		tmp[0] = ft_strjoin(path[i], "/");
-		tmp[1] = ft_strjoin(tmp[1], *cmd);
+		tmp[1] = ft_strjoin(tmp[0], *cmd);
 		if (access(tmp[1], F_OK | X_OK) == 0)
 		{
 			free(*cmd);
@@ -73,19 +73,17 @@ static void	pipeline(int in, char *cmd, int out, char *envp[])
 	ft_except(sp == NULL, __FILE__, __LINE__);
 	if (access(sp[0], F_OK | X_OK) == -1)
 		setcmd(envp, &sp[0]);
-	ft_printf("%d(%d-%d) : %s \n", getpid(), in, out, sp[0]);
 	ft_except(execve(sp[0], sp, envp) < 0, __FILE__, __LINE__);
 	i = -1;
 	while (sp[++i])
 		free(sp[i]);
 	free(sp);
-	//close(0);
 }
 
 int	main(int argc, char *argv[], char *envp[])
 {
 	pid_t		pid;
-	int			fds[2];
+	int			fd;
 	int			pipes[2];
 
 	ft_except(argc != 5, __FILE__, __LINE__);
@@ -93,15 +91,20 @@ int	main(int argc, char *argv[], char *envp[])
 	pid = fork();
 	if (pid == 0)
 	{
-		fds[STDIN_FILENO] = open(argv[1], O_RDONLY);
-		ft_except(fds[STDIN_FILENO] == -1, __FILE__, __LINE__);
-		pipeline(fds[STDIN_FILENO], argv[2], pipes[STDOUT_FILENO], envp);
+		close(pipes[STDIN_FILENO]);
+		fd = open(argv[1], O_RDONLY);
+		ft_except(fd == -1, __FILE__, __LINE__);
+		pipeline(fd, argv[2], pipes[STDOUT_FILENO], envp);
 	}
 	else
 	{
-		fds[STDOUT_FILENO] = open(argv[4], O_CREAT | O_TRUNC | O_WRONLY, 0644);
-		ft_except(fds[STDOUT_FILENO] == -1, __FILE__, __LINE__);
-		pipeline(pipes[STDIN_FILENO], argv[3], fds[STDOUT_FILENO], envp);
+		close(pipes[STDOUT_FILENO]);
+		fd = open(argv[4], O_CREAT | O_TRUNC | O_WRONLY, 0644);
+		ft_except(fd == -1, __FILE__, __LINE__);
+		pipeline(pipes[STDIN_FILENO], argv[3], fd, envp);
 	}
+	close(fd);
+	close(pipes[STDIN_FILENO]);
+	close(pipes[STDOUT_FILENO]);
 	exit(EXIT_SUCCESS);
 }
