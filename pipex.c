@@ -3,108 +3,113 @@
 /*                                                        :::      ::::::::   */
 /*   pipex.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: minjungk <minjungk@student.42seoul.kr>     +#+  +:+       +#+        */
+/*   By: minjungk <minjungk@student.42seoul.>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/01/16 10:17:59 by minjungk          #+#    #+#             */
-/*   Updated: 2023/01/18 00:30:51 by minjungk         ###   ########.fr       */
+/*   Created: 2023/05/03 09:24:27 by minjungk          #+#    #+#             */
+/*   Updated: 2023/05/05 01:59:34 by minjungk         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "pipex.h"
+#include <sys/wait.h>
 
-static void	ft_except(int condition, char *file, int line)
+extern void	replace_binary(char **envp, char **cmd);
+
+static void	ft_assert(int condition, char *file, int line)
 {
+	const int	save_errno = errno;
+
 	if (condition == 0)
 		return ;
 	ft_putstr_fd(file, STDERR_FILENO);
 	ft_putstr_fd(":", STDERR_FILENO);
 	ft_putnbr_fd(line, STDERR_FILENO);
+	errno = save_errno;
 	perror(":");
 	exit(EXIT_FAILURE);
 }
 
-static char	**getpath(char *envp[])
+static void	_redirection(struct s_pipex *content)
 {
-	int	i;
-
-	i = -1;
-	while (envp && envp[++i])
+	if (content->in_fd == -1 && content->infile)
+		content->in_fd = open(content->infile, O_RDONLY);
+	if (content->in_fd != -1)
 	{
-		if (ft_strncmp(envp[i], "PATH=", 5) == 0)
-			return (ft_split(envp[i] + 5, ':'));
+		if (dup2(content->in_fd, STDIN_FILENO) == -1)
+			ft_assert(1, __FILE__, __LINE__);
+		close(content->in_fd);
+		content->in_fd = -1;
 	}
-	return (NULL);
-}
-
-static void	setcmd(char *envp[], char **cmd)
-{
-	int		i;
-	char	*tmp[2];
-	char	**path;
-
-	path = getpath(envp);
-	i = -1;
-	while (path && path[++i])
+	if (content->out_fd)
 	{
-		tmp[0] = ft_strjoin(path[i], "/");
-		tmp[1] = ft_strjoin(tmp[0], *cmd);
-		if (access(tmp[1], F_OK | X_OK) == 0)
-		{
-			free(*cmd);
-			*cmd = ft_strdup(tmp[1]);
-		}
-		free(tmp[0]);
-		free(tmp[1]);
-		free(path[i]);
+		close(content->out_fd);
+		content->out_fd = open(content->outfile, content->outflag, 0644);
 	}
-	free(path);
-}
-
-static void	pipeline(int in, char *cmd, int out, char *envp[])
-{
-	int		i;
-	char	**sp;
-
-	ft_except(dup2(in, STDIN_FILENO) < 0, __FILE__, __LINE__);
-	ft_except(close(in) < 0, __FILE__, __LINE__);
-	ft_except(dup2(out, STDOUT_FILENO) < 0, __FILE__, __LINE__);
-	ft_except(close(out) < 0, __FILE__, __LINE__);
-	sp = ft_split(cmd, ' ');
-	ft_except(sp == NULL, __FILE__, __LINE__);
-	if (access(sp[0], F_OK | X_OK) == -1)
-		setcmd(envp, &sp[0]);
-	ft_except(execve(sp[0], sp, envp) < 0, __FILE__, __LINE__);
-	i = -1;
-	while (sp[++i])
-		free(sp[i]);
-	free(sp);
-}
-
-int	main(int argc, char *argv[], char *envp[])
-{
-	pid_t		pid;
-	int			fd;
-	int			pipes[2];
-
-	ft_except(argc != 5, __FILE__, __LINE__);
-	ft_except(pipe(pipes) == -1, __FILE__, __LINE__);
-	pid = fork();
-	if (pid == 0)
+	if (content->out_fd != -1)
 	{
-		close(pipes[STDIN_FILENO]);
-		fd = open(argv[1], O_RDONLY);
-		ft_except(fd == -1, __FILE__, __LINE__);
-		pipeline(fd, argv[2], pipes[STDOUT_FILENO], envp);
+		if (dup2(content->out_fd, STDOUT_FILENO) == -1)
+			ft_assert(1, __FILE__, __LINE__);
+		close(content->out_fd);
+		content->out_fd = -1;
+	}
+}
+
+static void	_exec(void *param)
+{
+	int						pipes[2];
+	struct s_pipex *const	content = param;
+
+	if (content == NULL)
+		return ;
+	ft_assert(pipe(pipes) == -1, __FILE__, __LINE__);
+	if (fork() == 0)
+	{
+		close(pipes[0]);
+		ft_assert(dup2(pipes[1], STDOUT_FILENO) == -1, __FILE__, __LINE__);
+		close(pipes[1]);
+		_redirection(content);
+		if (access(content->argv[0], F_OK | X_OK) == -1)
+			replace_binary(content->envp, content->argv);
+		execve(content->argv[0], content->argv, content->envp);
 	}
 	else
 	{
-		close(pipes[STDOUT_FILENO]);
-		fd = open(argv[4], O_CREAT | O_TRUNC | O_WRONLY, 0644);
-		ft_except(fd == -1, __FILE__, __LINE__);
-		pipeline(pipes[STDIN_FILENO], argv[3], fd, envp);
+		close(pipes[1]);
+		ft_assert(dup2(pipes[0], STDIN_FILENO) == -1, __FILE__, __LINE__);
+		close(pipes[0]);
 	}
-	close(fd);
-	close(pipes[STDIN_FILENO]);
-	close(pipes[STDOUT_FILENO]);
-	exit(EXIT_SUCCESS);
+}
+
+static void	_wait(void *param)
+{
+	struct s_pipex *const	content = param;
+
+	if (content == NULL)
+		return ;
+	waitpid(-1, NULL, 0);
+}
+
+int	run_pipex(t_pipex *pipex)
+{
+	int				ret;
+	const int		save_stdin = dup(STDIN_FILENO);
+	const int		save_stdout = dup(STDOUT_FILENO);
+	struct s_pipex	*content;
+
+	ret = EXIT_FAILURE;
+	if (save_stdin != -1 && save_stdout != -1)
+	{
+		content = ft_lstlast(pipex)->content;
+		content->out_fd = save_stdout;
+		{
+			ret = EXIT_SUCCESS;
+			ft_lstiter(pipex, _exec);
+			ft_lstiter(pipex, _wait);
+		}
+		dup2(save_stdout, STDOUT_FILENO);
+		dup2(save_stdin, STDIN_FILENO);
+	}
+	close(save_stdin);
+	close(save_stdout);
+	return (ret);
 }

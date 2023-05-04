@@ -6,15 +6,15 @@
 #    By: minjungk <minjungk@student.42seoul.kr>     +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2022/08/29 06:04:57 by minjungk          #+#    #+#              #
-#    Updated: 2023/01/16 17:28:37 by minjungk         ###   ########.fr        #
+#    Updated: 2023/05/05 03:28:13 by minjungk         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 .DEFAULT_ON_ERROR:
 .DEFAULT_GOAL := all
 
-CFLAGS = -Wall -Wextra -Werror -MMD -MP -Weverything
-CPPFLAGS = -I./libft
+CFLAGS = -Wall -Wextra -Werror -MMD -MP
+CPPFLAGS = -I./libft -I./src
 LDFLAGS = -L./libft
 LDLIBS = -lft
 
@@ -38,22 +38,45 @@ $(LIBFT):
 
 PIPEX = pipex
 
-PIPEX_SRCS = \
-		pipex.c \
+COMMON_SRCS = \
+	replace_binary.c \
+	init_pipex.c \
+	pipex.c \
 
-PIPEX_OBJS = $(PIPEX_SRCS:.c=.o)
-PIPEX_DEPS = $(PIPEX_SRCS:.c=.d)
+MANDATORY_SRCS = \
+	mandatory.c \
+
+BONUS_SRCS = \
+	heredoc.c \
+	bonus.c \
+
+ifeq ($(MAKECMDGOALS), bonus)
+PIPEX_SRCS := $(COMMON_SRCS) $(MANDATORY_SRCS)
+PIPEX_OBJS := $(PIPEX_SRCS:.c=.o)
+PIPEX_DEPS := $(PIPEX_SRCS:.c=.d)
 -include $(PIPEX_DEPS)
 
-$(PIPEX): $(PIPEX_OBJS)
 $(PIPEX_OBJS): $(LIBFT)
+$(PIPEX): $(PIPEX_OBJS)
+	$(info $(PIPEX_SRCS))
+	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) -o $@
+else
+PIPEX_SRCS := $(COMMON_SRCS) $(BONUS_SRCS)
+PIPEX_OBJS := $(PIPEX_SRCS:.c=.o)
+PIPEX_DEPS := $(PIPEX_SRCS:.c=.d)
+-include $(PIPEX_DEPS)
+
+$(PIPEX_OBJS): $(LIBFT)
+$(PIPEX): $(PIPEX_OBJS)
+	$(info $(PIPEX_SRCS))
+	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) -o $@
+endif
 
 # **************************************************************************** #
 # main
 # **************************************************************************** #
 
 all bonus:
-	$(MAKE) -C $(dir $(LIBFT))
 	$(MAKE) $(PIPEX)
 
 clean:
