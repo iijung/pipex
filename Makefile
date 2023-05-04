@@ -6,7 +6,7 @@
 #    By: minjungk <minjungk@student.42seoul.kr>     +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2022/08/29 06:04:57 by minjungk          #+#    #+#              #
-#    Updated: 2023/05/05 03:28:13 by minjungk         ###   ########.fr        #
+#    Updated: 2023/05/05 03:48:59 by minjungk         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -50,8 +50,8 @@ BONUS_SRCS = \
 	heredoc.c \
 	bonus.c \
 
-ifeq ($(MAKECMDGOALS), bonus)
-PIPEX_SRCS := $(COMMON_SRCS) $(MANDATORY_SRCS)
+ifdef WITH_BONUS
+PIPEX_SRCS := $(COMMON_SRCS) $(BONUS_SRCS)
 PIPEX_OBJS := $(PIPEX_SRCS:.c=.o)
 PIPEX_DEPS := $(PIPEX_SRCS:.c=.d)
 -include $(PIPEX_DEPS)
@@ -61,7 +61,7 @@ $(PIPEX): $(PIPEX_OBJS)
 	$(info $(PIPEX_SRCS))
 	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) -o $@
 else
-PIPEX_SRCS := $(COMMON_SRCS) $(BONUS_SRCS)
+PIPEX_SRCS := $(COMMON_SRCS) $(MANDATORY_SRCS)
 PIPEX_OBJS := $(PIPEX_SRCS:.c=.o)
 PIPEX_DEPS := $(PIPEX_SRCS:.c=.d)
 -include $(PIPEX_DEPS)
@@ -76,8 +76,11 @@ endif
 # main
 # **************************************************************************** #
 
-all bonus:
+all:
 	$(MAKE) $(PIPEX)
+
+bonus:
+	$(MAKE) WITH_BONUS=1 $(PIPEX)
 
 clean:
 	$(MAKE) -C $(dir $(LIBFT)) clean
