@@ -6,7 +6,7 @@
 /*   By: minjungk <minjungk@student.42seoul.kr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/05 01:06:21 by minjungk          #+#    #+#             */
-/*   Updated: 2023/05/05 01:56:40 by minjungk         ###   ########.fr       */
+/*   Updated: 2023/05/05 03:44:03 by minjungk         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,7 @@ static t_pipex	*_make_content(char *command, char **envp)
 	if (rtn == NULL || content == NULL)
 	{
 		free(content);
-		ft_lstdelone(rtn, free);
+		ft_lstdelone(rtn, NULL);
 		return (NULL);
 	}
 	content->in_fd = -1;
@@ -43,8 +43,10 @@ void	free_pipex(void *param)
 	int						argc;
 	struct s_pipex *const	content = param;
 
-	close(content->in_fd);
-	close(content->out_fd);
+	if (content->in_fd != -1)
+		close(content->in_fd);
+	if (content->out_fd != -1)
+		close(content->out_fd);
 	content->in_fd = -1;
 	content->out_fd = -1;
 	argc = 0;
@@ -52,6 +54,7 @@ void	free_pipex(void *param)
 		free(content->argv[argc++]);
 	free(content->argv);
 	content->argv = NULL;
+	free(content);
 }
 
 t_pipex	*new_pipex(int argc, char **argv, char **envp)

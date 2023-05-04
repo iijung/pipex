@@ -6,7 +6,7 @@
 /*   By: minjungk <minjungk@student.42seoul.>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/03 09:24:27 by minjungk          #+#    #+#             */
-/*   Updated: 2023/05/05 01:59:34 by minjungk         ###   ########.fr       */
+/*   Updated: 2023/05/05 03:43:08 by minjungk         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,9 +40,10 @@ static void	_redirection(struct s_pipex *content)
 		close(content->in_fd);
 		content->in_fd = -1;
 	}
-	if (content->out_fd)
+	if (content->outfile)
 	{
-		close(content->out_fd);
+		if (content->out_fd != -1)
+			close(content->out_fd);
 		content->out_fd = open(content->outfile, content->outflag, 0644);
 	}
 	if (content->out_fd != -1)
@@ -109,7 +110,9 @@ int	run_pipex(t_pipex *pipex)
 		dup2(save_stdout, STDOUT_FILENO);
 		dup2(save_stdin, STDIN_FILENO);
 	}
-	close(save_stdin);
-	close(save_stdout);
+	if (save_stdin != -1)
+		close(save_stdin);
+	if (save_stdin != -1)
+		close(save_stdout);
 	return (ret);
 }
