@@ -6,7 +6,7 @@
 /*   By: minjungk <minjungk@student.42seoul.>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/03 09:24:27 by minjungk          #+#    #+#             */
-/*   Updated: 2023/05/05 03:43:08 by minjungk         ###   ########.fr       */
+/*   Updated: 2023/05/05 15:11:43 by minjungk         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,7 +63,8 @@ static void	_exec(void *param)
 	if (content == NULL)
 		return ;
 	ft_assert(pipe(pipes) == -1, __FILE__, __LINE__);
-	if (fork() == 0)
+	content->pid = fork();
+	if (content->pid == 0)
 	{
 		close(pipes[0]);
 		ft_assert(dup2(pipes[1], STDOUT_FILENO) == -1, __FILE__, __LINE__);
@@ -87,7 +88,7 @@ static void	_wait(void *param)
 
 	if (content == NULL)
 		return ;
-	waitpid(-1, NULL, 0);
+	waitpid(content->pid, &content->exit_status, 0);
 }
 
 int	run_pipex(t_pipex *pipex)
@@ -103,9 +104,9 @@ int	run_pipex(t_pipex *pipex)
 		content = ft_lstlast(pipex)->content;
 		content->out_fd = save_stdout;
 		{
-			ret = EXIT_SUCCESS;
 			ft_lstiter(pipex, _exec);
 			ft_lstiter(pipex, _wait);
+			ret = content->exit_status;
 		}
 		dup2(save_stdout, STDOUT_FILENO);
 		dup2(save_stdin, STDIN_FILENO);

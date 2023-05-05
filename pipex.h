@@ -6,7 +6,7 @@
 /*   By: minjungk <minjungk@student.42seoul.kr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/01/15 22:34:32 by minjungk          #+#    #+#             */
-/*   Updated: 2023/05/05 01:39:04 by minjungk         ###   ########.fr       */
+/*   Updated: 2023/05/05 15:01:16 by minjungk         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,9 +21,11 @@ typedef t_list	t_pipex;
 struct s_pipex
 {
 	char	*command;
+	pid_t	pid;
 	int		argc;
 	char	**argv;
 	char	**envp;
+	int		exit_status;
 	int		in_fd;
 	int		out_fd;
 	char	*infile;
