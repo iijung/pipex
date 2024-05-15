@@ -113,7 +113,7 @@ int	run_pipex(t_pipex *pipex)
 	}
 	if (save_stdin != -1)
 		close(save_stdin);
-	if (save_stdin != -1)
+	if (save_stdout != -1)
 		close(save_stdout);
 	return (ret);
 }
