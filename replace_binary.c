@@ -6,11 +6,11 @@
 /*   By: minjungk <minjungk@student.42seoul.kr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/05 00:03:50 by minjungk          #+#    #+#             */
-/*   Updated: 2023/05/05 01:54:01 by minjungk         ###   ########.fr       */
+/*   Updated: 2024/06/22 23:48:56 by minjungk         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "libft.h"
+#include "libexternal.h"
 
 static char	**getpath(char **envp)
 {

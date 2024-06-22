@@ -1,0 +1,6 @@
+[submodule "external/ft_printf"]
+	path = external/ft_printf
+	url = https://github.com/iijung/ft_printf
+[submodule "external/get_next_line"]
+	path = external/get_next_line
+	url = https://github.com/iijung/get_next_line

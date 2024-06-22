@@ -6,7 +6,7 @@
 /*   By: minjungk <minjungk@student.42seoul.kr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/01/15 22:34:32 by minjungk          #+#    #+#             */
-/*   Updated: 2023/05/05 15:01:16 by minjungk         ###   ########.fr       */
+/*   Updated: 2024/06/22 23:49:50 by minjungk         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 # define PIPEX_H
 # include <stdio.h>
 # include "fcntl.h"
-# include "libft.h"
+# include "libexternal.h"
 
 typedef t_list	t_pipex;
 

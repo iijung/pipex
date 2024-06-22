@@ -6,31 +6,39 @@
 #    By: minjungk <minjungk@student.42seoul.kr>     +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2022/08/29 06:04:57 by minjungk          #+#    #+#              #
-#    Updated: 2023/05/05 03:48:59 by minjungk         ###   ########.fr        #
+#    Updated: 2024/06/22 23:50:20 by minjungk         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 .DELETE_ON_ERROR:
 .DEFAULT_GOAL := all
 
-CFLAGS = -Wall -Wextra -Werror -MMD -MP
-CPPFLAGS = -I./libft -I./src
-LDFLAGS = -L./libft
-LDLIBS = -lft
+CPPFLAGS	+= -MMD -MP
+CFLAGS		+= -Wall -Wextra -Werror -O2
 
 ifdef DEBUG
-	CFLAGS += -O0 -g -fsanitize=address,undefined
-	LDFLAGS += -fsanitize=address,undefined
+CFLAGS		+= -g -fsanitize=address,undefined
+LDFLAGS		+= -fsanitize=address,undefined
 endif
 
 # **************************************************************************** #
 # dependency
 # **************************************************************************** #
 
-LIBFT = libft/libft.a
+LIBS = \
+	external/libexternal.a \
 
-$(LIBFT):
+CPPFLAGS	+= $(foreach dir, $(dir $(LIBS)), -I$(dir))
+LDFLAGS 	+= $(foreach dir, $(dir $(LIBS)), -L$(dir))
+LDLIBS  	+= $(foreach lib, $(notdir $(LIBS)), -l$(patsubst lib%.a,%,$(lib)))
+
+$(LIBS):
 	$(MAKE) -C $(@D)
+
+# **************************************************************************** #
+# push_swap
+# **************************************************************************** #
+
 
 # **************************************************************************** #
 # pipex
@@ -56,7 +64,7 @@ PIPEX_OBJS := $(PIPEX_SRCS:.c=.o)
 PIPEX_DEPS := $(PIPEX_SRCS:.c=.d)
 -include $(PIPEX_DEPS)
 
-$(PIPEX_OBJS): $(LIBFT)
+$(PIPEX_OBJS): $(LIBS)
 $(PIPEX): $(PIPEX_OBJS)
 	$(info $(PIPEX_SRCS))
 	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) -o $@
@@ -66,7 +74,7 @@ PIPEX_OBJS := $(PIPEX_SRCS:.c=.o)
 PIPEX_DEPS := $(PIPEX_SRCS:.c=.d)
 -include $(PIPEX_DEPS)
 
-$(PIPEX_OBJS): $(LIBFT)
+$(PIPEX_OBJS): $(LIBS)
 $(PIPEX): $(PIPEX_OBJS)
 	$(info $(PIPEX_SRCS))
 	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) -o $@
@@ -83,13 +91,13 @@ bonus:
 	$(MAKE) WITH_BONUS=1 $(PIPEX)
 
 clean:
-	$(MAKE) -C $(dir $(LIBFT)) clean
+	$(MAKE) -C $(dir $(LIBS)) clean
 	$(RM) $(wildcard *.o) $(wildcard *.d)
 
 fclean: clean
-	$(RM) $(LIBFT) $(PIPEX)
+	$(RM) $(LIBS) $(PIPEX)
 
 re: fclean
 	$(MAKE)
 
-.PHONY: all clean fclean re bonus $(dir $(LIBFT))
+.PHONY: all clean fclean re bonus $(dir $(LIBS))
