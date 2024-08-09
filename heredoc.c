@@ -6,18 +6,12 @@
 /*   By: minjungk <minjungk@student.42seoul.kr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/05 00:14:21 by minjungk          #+#    #+#             */
-/*   Updated: 2023/05/05 00:18:25 by minjungk         ###   ########.fr       */
+/*   Updated: 2024/08/09 21:42:40 by minjungk         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "libft.h"
 //#include <stdio.h>
-
-enum e_pipe_direction
-{
-	PIPE_OUT,
-	PIPE_IN
-};
 
 int	heredoc(char *word)
 {
@@ -28,24 +22,24 @@ int	heredoc(char *word)
 	if (word == NULL || pipe(pipes) == -1)
 		return (-1);
 	word_len = ft_strlen(word);
-	line = get_next_line(0);
+	line = get_next_line(STDIN_FILNO);
 	while (line)
 	{
 		if (ft_strncmp(line, word, word_len) == 0
 			&& (line[word_len] == '\n' || line[word_len] == '\0'))
 			break ;
-		if (write(pipes[PIPE_IN], line, ft_strlen(line)) < 0)
+		if (write(pipes[1], line, ft_strlen(line)) < 0)
 		{
-			close(pipes[PIPE_OUT]);
-			pipes[PIPE_OUT] = -1;
+			close(pipes[0]);
+			pipes[0] = -1;
 			break ;
 		}
 		free(line);
-		line = get_next_line(0);
+		line = get_next_line(STDIN_FILENO);
 	}
 	free(line);
-	close(pipes[PIPE_IN]);
-	return (pipes[PIPE_OUT]);
+	close(pipes[1]);
+	return (pipes[0]);
 }
 
 /*
